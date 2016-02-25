@@ -5,6 +5,7 @@ __author__ = 'Max'
 # (in this case gpsd) with the current GPS data. The core software can now access the current
 # location through the global variable 'gpsd'. For example: gpsd.fix.latitude
 
+
 from gps import *
 import os
 import threading
