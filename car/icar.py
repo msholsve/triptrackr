@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from enum import Enum
+from enum import IntEnum
 
 class ICar(metaclass=ABCMeta):
 
@@ -55,7 +55,7 @@ class ICar(metaclass=ABCMeta):
         # Return: string with latest error message
         pass
 
-    class DataTypes(Enum):
+    class DataTypes(IntEnum):
         FuelStatus          = 0x03
         FuelLevel           = 0x2F
         EngineLoad          = 0x04
