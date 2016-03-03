@@ -25,16 +25,16 @@ if __name__ == '__main__':
 
     timeSinceErrorDetect = 0
     try:
-        obd.EnableFetch(obd.GetSupportedDataTypes())
+        obd.enableFetch(obd.getSupportedDataTypes())
         while True:
             error = ""
             if timeSinceErrorDetect > errorPollingDelay:
-                error = obd.CheckForCarErrors()
+                error = obd.checkForCarErrors()
                 timeSinceErrorDetect = 0
             else:
                 timeSinceErrorDetect += pollingDelay
 
-            dataList = obd.FetchData()
+            dataList = obd.fetchData()
 
             satelliteFix = gpsd.gotSatLink()
             data = {
@@ -64,4 +64,4 @@ if __name__ == '__main__':
     except (KeyboardInterrupt, SystemExit):
         print("\nKilling Thread...")
         gpsd.disconnect()
-        # obd.close()
+        obd.close()
