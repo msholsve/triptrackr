@@ -31,7 +31,7 @@ class Car(ICar):
         print("Initialized Car!")
         random.seed()
 
-    def enableFetch(dataTypeList):
+    def enableFetch(self, dataTypeList):
         self.__enabled = dataTypeList
         pass
 
@@ -96,10 +96,10 @@ class Car(ICar):
 if __name__ == '__main__':
     car = Car()
     supportedDataTypes = car.getSupportedDataTypes()
-
+    car.enableFetch(supportedDataTypes)
     print('Supported data types is', supportedDataTypes)
     while True:
         time.sleep(1)
-        data = car.fetchData(supportedDataTypes)
+        data = car.fetchData()
         for key, value in data.items():
             print(int(key), value)
