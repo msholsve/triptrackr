@@ -1,6 +1,6 @@
 from gpswrapper import gpspoller
 from dbwrapper import dbwrapper
-from car import car
+from car import carsim as car
 import time
 # import threading
 
@@ -42,6 +42,7 @@ if __name__ == '__main__':
                 'latitude': str(gpsd.getPosition()[0] * satelliteFix),
                 'longitude': str(gpsd.getPosition()[1] * satelliteFix),
                 'fuel_status': dataList[obd.DataTypes.FuelStatus],
+                'fuel_level': dataList[obd.DataTypes.FuelLevel],
                 'fuel_rate': dataList[obd.DataTypes.FuelRate],
                 'engine_load': dataList[obd.DataTypes.EngineLoad],
                 'rpm': dataList[obd.DataTypes.RPM],
@@ -57,7 +58,9 @@ if __name__ == '__main__':
             trip['timestamp'] = time.localtime()
             trip['data'] = data
 
+            print(trip)
             dbWrapper.send(trip)
+            print("Data sent!")
 
             time.sleep(pollingDelay)
 
