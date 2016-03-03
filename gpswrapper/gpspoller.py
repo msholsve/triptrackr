@@ -46,8 +46,8 @@ class GpsPoller(threading.Thread):
 
     def disconnect(self):
         with self.__mutex:
-            self.gpsd.running = False
-            self.gpsd.join()  # wait for the thread to finish what it's doing
+            self.__gpsd.running = False
+            self.__gpsd.join()  # wait for the thread to finish what it's doing
 # Example on how to use a GpsPoller object:
 #
 # if __name__ == '__main__':
