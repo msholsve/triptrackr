@@ -7,51 +7,49 @@ class ICar(metaclass=ABCMeta):
     def __init__(self):
         pass
 
-
     @abstractmethod
-    def Connect(self):
-        # Return: bool indicating if the connection was succesfull
+    def close(self):
         pass
 
     @abstractmethod
-    def EnableFetch(self,dataTypeList):
+    def enableFetch(self,dataTypeList):
         # Return: void
         pass
 
     @abstractmethod
-    def GetSupportedDataTypes(self):
+    def getSupportedDataTypes(self):
         # Return: List of supported data types
         # If error, returns None
         pass
 
     @abstractmethod
-    def FetchData(self,dataTypeList=None):
+    def fetchData(self,dataTypeList=None):
         # Return: Map with data defined by 
         # enable fetch or given data type list
         # If error, returns None
         pass
 
     @abstractmethod
-    def DumpAllData(self):
+    def dumpAllData(self):
         # Return: Map of all available data from the car
         # If error, returns None
         pass
 
     @abstractmethod
-    def DumpFreezeData(self):
+    def dumpFreezeData(self):
         # Return: Map of all available freeze data (data logged on error)
         # If error, returns None
         pass
 
     @abstractmethod
-    def CheckForCarErrors(self):
+    def checkForCarErrors(self):
         # Return: Map with error codes as keys and 
         # description as value
         # If error, returns None
         pass
 
     @abstractmethod
-    def GetErrorMessage(self):
+    def getErrorMessage(self):
         # Return: string with latest error message
         pass
 

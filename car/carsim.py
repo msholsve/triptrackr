@@ -2,7 +2,7 @@ from icar import ICar
 from enum import Enum
 import random, time
 
-class CarSim(ICar):
+class Car(ICar):
 
     class SimVarDir(Enum):
         Up   = 0
@@ -31,17 +31,14 @@ class CarSim(ICar):
         print("Initialized Car!")
         random.seed()
 
-    def Connect(self):
-        print("Connected!")
-
-    def EnableFetch(dataTypeList):
+    def enableFetch(dataTypeList):
         self.__enabled = dataTypeList
         pass
 
-    def GetSupportedDataTypes(self):
+    def getSupportedDataTypes(self):
         return self.__simParams.keys()
 
-    def FetchData(self, dataTypeList=None):
+    def fetchData(self, dataTypeList=None):
         dataToCheck=self.__enabled
         if dataTypeList is not None:
             dataToCheck = dataTypeList
@@ -52,20 +49,20 @@ class CarSim(ICar):
         # Return: Map with data defined by 
         # enable fetch or given data type list
 
-    def DumpAllData(self):
+    def dumpAllData(self):
         # Return: Map of all available data from the car
-        return self.FetchData()
+        return self.fetchData()
         pass
 
-    def DumpFreezeData(self):
+    def dumpFreezeData(self):
         # Return: Map of all available freeze data (data logged on error)
-        return self.FetchData()
+        return self.fetchData()
 
-    def CheckForCarErrors(self):
+    def checkForCarErrors(self):
         return {}
 
-    def GetErrorMessage(self):
-        return __errorMessage
+    def getErrorMessage(self):
+        return self.__errorMessage
 
     def __get(self, dataType):
         if dataType not in self.__simParams:
@@ -93,16 +90,16 @@ class CarSim(ICar):
         self.__simValues[dataType] = simValue
         return simValue
 
-    
+    def close(self):
+        pass
 
 if __name__ == '__main__':
-    car = CarSim()
-    car.Connect()
-    supportedDataTypes = car.GetSupportedDataTypes()
+    car = Car()
+    supportedDataTypes = car.getSupportedDataTypes()
 
     print('Supported data types is', supportedDataTypes)
     while True:
         time.sleep(1)
-        data = car.FetchData(supportedDataTypes)
+        data = car.fetchData(supportedDataTypes)
         for key, value in data.items():
             print(int(key), value)
