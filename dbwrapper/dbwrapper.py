@@ -11,7 +11,7 @@ class DbWrapper:
 
     def send(self, data):
         url = 'http://' + self.ip + ':' + self.port + "/api/post_data"
-        requests.post(url, data=data, auth=(self.username, self.password))
+        requests.post(url, json=data, auth=(self.username, self.password))
 
 """
 test = DbWrapper('10.20.80.193', '8080', 'Admin', '1234')

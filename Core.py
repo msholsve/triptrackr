@@ -25,10 +25,7 @@ if __name__ == '__main__':
 
     timeSinceErrorDetect = 0
     try:
-        gpsd.start()
-        # obd.start()
         obd.EnableFetch(obd.GetSupportedDataTypes())
-        time.sleep(2)  # Data stabilization delay
         while True:
             error = ""
             if timeSinceErrorDetect > errorPollingDelay:
@@ -39,10 +36,11 @@ if __name__ == '__main__':
 
             dataList = obd.FetchData()
 
-            satelliteFix = gpsd.have_fix()
-            data = {  # TODO: Finne ut om det er riktig måte å få tilgang til enumeratoren
-                'latitude': str(gpsd.get_latitude() * satelliteFix),
-                'longitude': str(gpsd.get_longitude() * satelliteFix),
+            satelliteFix = gpsd.gotSatLink()
+            data = {
+                'time': str(gpsd.getTime()),
+                'latitude': str(gpsd.getPosition()[0] * satelliteFix),
+                'longitude': str(gpsd.getPosition()[1] * satelliteFix),
                 'fuel_status': dataList[obd.DataTypes.FuelStatus],
                 'fuel_rate': dataList[obd.DataTypes.FuelRate],
                 'engine_load': dataList[obd.DataTypes.EngineLoad],
@@ -54,7 +52,6 @@ if __name__ == '__main__':
                 'outside_air_temp:': dataList[obd.DataTypes.OutsideAirTemp],
                 'oil_temp': dataList[obd.DataTypes.OilTemp],
                 'error': error
-
             }
 
             trip['timestamp'] = time.localtime()
@@ -67,4 +64,4 @@ if __name__ == '__main__':
     except (KeyboardInterrupt, SystemExit):
         print("\nKilling Thread...")
         gpsd.disconnect()
-        # car.disconnect()
+        # obd.close()

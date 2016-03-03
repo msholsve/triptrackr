@@ -9,6 +9,7 @@ from gps import *
 import os, time
 import threading
 
+dataStabilizationDelay = 2
 
 class GpsPoller(threading.Thread):
 
@@ -21,6 +22,8 @@ class GpsPoller(threading.Thread):
         self.__gpsd = gps(mode=WATCH_ENABLE)  # starting the stream of info
         self.current_value = None
         self.running = True  # setting the thread running to true
+        self.start()
+        time.sleep(dataStabilizationDelay)
 
     def run(self):
         while gpsp.running:
@@ -28,19 +31,15 @@ class GpsPoller(threading.Thread):
             with self.__mutex:
                 self.__gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer
 
-    def get_latitude(self):
+    def getPosition(self):
         with self.__mutex:
-            return str(self.__gpsd.fix.latitude)
+            return self.__gpsd.fix.latitude, self.__gpsd.fix.longitude
 
-    def get_longitude(self):
-        with self.__mutex:
-            return str(self.__gpsd.fix.longitude)
-
-    def get_time(self):
+    def getTime(self):
         with self.__mutex:
             return str(self.__gpsd.utc)
 
-    def have_fix(self):
+    def gotSatLink(self):
         with self.__mutex:
             return str(self.__gpsd.fix.mode) != "1"
 
