@@ -10,9 +10,6 @@ import os, time
 import threading
 
 
-
-
-
 class GpsPoller(threading.Thread):
 
     __mutex = threading.Lock()
@@ -31,12 +28,27 @@ class GpsPoller(threading.Thread):
             with self.__mutex:
                 self.__gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer
 
-    def GetPosition(self):
+    def get_latitude(self):
         with self.__mutex:
-            pass
+            return str(self.__gpsd.fix.latitude)
 
 
+    def get_longitude(self):
+        with self.__mutex:
+            return str(self.__gpsd.fix.longitude)
 
+    def get_time(self):
+        with self.__mutex:
+            return str(self.__gpsd.utc)
+
+    def have_fix(self):
+        with self.__mutex:
+            return str(self.__gpsd.fix.mode) != "1"
+
+    def disconnect(self):
+        with self.__mutex:
+            self.gpsd.running = False
+            self.gpsd.join() ## wait for the thread to finish what it's doing
 # Example on how to use a GpsPoller object:
 #
 # if __name__ == '__main__':
