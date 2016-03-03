@@ -32,7 +32,6 @@ class GpsPoller(threading.Thread):
         with self.__mutex:
             return str(self.__gpsd.fix.latitude)
 
-
     def get_longitude(self):
         with self.__mutex:
             return str(self.__gpsd.fix.longitude)
@@ -48,7 +47,7 @@ class GpsPoller(threading.Thread):
     def disconnect(self):
         with self.__mutex:
             self.gpsd.running = False
-            self.gpsd.join() ## wait for the thread to finish what it's doing
+            self.gpsd.join()  # wait for the thread to finish what it's doing
 # Example on how to use a GpsPoller object:
 #
 # if __name__ == '__main__':
