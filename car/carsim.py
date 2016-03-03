@@ -13,6 +13,7 @@ class Car(ICar):
     __errorMessage = ''
     __simParams = {
         # DataType                      (init value, variance, SimVarDir     , min, max )
+        ICar.DataTypes.FuelStatus           :   (0         , 0       , SimVarDir.Down, 0  , 100 ),
         ICar.DataTypes.FuelLevel            :   (50        , 0.1     , SimVarDir.Down, 0  , 100 ),
         ICar.DataTypes.EngineLoad           :   (20        , 5       , SimVarDir.Both, 0  , 100 ),
         ICar.DataTypes.RPM                  :   (800       , 100     , SimVarDir.Both, 800, 6000),
