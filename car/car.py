@@ -13,7 +13,7 @@ class Car(ICar):
     def Connect(self):
         self.__obd = obd.OBD()
 
-    def EnableFetch(dataTypeList):
+    def EnableFetch(self, dataTypeList):
         if self.__obd == None:
             raise StandardError("OBD is not connected")
         __enabled = dataTypeList
