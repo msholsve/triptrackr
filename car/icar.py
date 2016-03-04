@@ -5,10 +5,17 @@ class ICar(metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self):
+        # Tries to connect to the OBD device. Check variable connected to check if there is a connection.
+        pass
+
+    @abstractmethod
+    def Reconnect(self):
+        # Closes OBD connection if there was one and reconnects
         pass
 
     @abstractmethod
     def close(self):
+        # Closes the serial connection to the OBD device
         pass
 
     @abstractmethod
@@ -56,10 +63,13 @@ class ICar(metaclass=ABCMeta):
     class DataTypes(IntEnum):
         FuelStatus          = 0x03
         FuelLevel           = 0x2F
+        EngineCoolantTemp   = 0x05
         EngineLoad          = 0x04
         RPM                 = 0x0C
         Speed               = 0x0D
         IntakeAirTemp       = 0x0F
+        IntakePreassure     = 0x0B
+        FuelRailPressure    = 0x23
         ThrottlePosition    = 0x11
         RunTime             = 0x1F
         OutsideAirTemp      = 0x46

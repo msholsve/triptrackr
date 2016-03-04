@@ -1,6 +1,10 @@
-from icar import ICar
 from enum import Enum
 import random, time
+
+try:
+    from .icar import ICar
+except SystemError:
+    from icar import ICar
 
 class Car(ICar):
 
@@ -13,10 +17,10 @@ class Car(ICar):
     __errorMessage = ''
     __simParams = {
         # DataType                      (init value, variance, SimVarDir     , min, max )
-        ICar.DataTypes.FuelStatus           :   (0         , 0       , SimVarDir.Down, 0  , 100 ),
+        ICar.DataTypes.FuelStatus           :   (1         , 0       , SimVarDir.Down, 0  , 100 ),
         ICar.DataTypes.FuelLevel            :   (50        , 0.1     , SimVarDir.Down, 0  , 100 ),
         ICar.DataTypes.EngineLoad           :   (20        , 5       , SimVarDir.Both, 0  , 100 ),
-        ICar.DataTypes.RPM                  :   (800       , 100     , SimVarDir.Both, 800, 6000),
+        ICar.DataTypes.RPM                  :   (800       , 1000    , SimVarDir.Both, 800, 6000),
         ICar.DataTypes.Speed                :   (0         , 10      , SimVarDir.Both, 0  , 120 ),
         ICar.DataTypes.IntakeAirTemp        :   (20        , 0.2     , SimVarDir.Both, 0  , 40  ),
         ICar.DataTypes.ThrottlePosition     :   (0         , 50      , SimVarDir.Both, 0  , 100 ),
@@ -26,11 +30,16 @@ class Car(ICar):
         ICar.DataTypes.FuelRate             :   (0         , 2       , SimVarDir.Both, 0  , 20  ),
     }
 
+    connected = True
+
     __simValues = {}
 
     def __init__(self):
         print("Initialized Car!")
         random.seed()
+
+    def Reconnect(self):
+        pass
 
     def enableFetch(self, dataTypeList):
         self.__enabled = dataTypeList
