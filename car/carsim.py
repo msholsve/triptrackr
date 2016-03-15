@@ -1,8 +1,12 @@
-from icar import ICar
 from enum import Enum
 import random, time
 
-class CarSim(ICar):
+try:
+    from .icar import ICar
+except SystemError:
+    from icar import ICar
+
+class Car(ICar):
 
     class SimVarDir(Enum):
         Up   = 0
@@ -13,9 +17,10 @@ class CarSim(ICar):
     __errorMessage = ''
     __simParams = {
         # DataType                      (init value, variance, SimVarDir     , min, max )
+        ICar.DataTypes.FuelStatus           :   (1         , 0       , SimVarDir.Down, 0  , 100 ),
         ICar.DataTypes.FuelLevel            :   (50        , 0.1     , SimVarDir.Down, 0  , 100 ),
         ICar.DataTypes.EngineLoad           :   (20        , 5       , SimVarDir.Both, 0  , 100 ),
-        ICar.DataTypes.RPM                  :   (800       , 100     , SimVarDir.Both, 800, 6000),
+        ICar.DataTypes.RPM                  :   (800       , 1000    , SimVarDir.Both, 800, 6000),
         ICar.DataTypes.Speed                :   (0         , 10      , SimVarDir.Both, 0  , 120 ),
         ICar.DataTypes.IntakeAirTemp        :   (20        , 0.2     , SimVarDir.Both, 0  , 40  ),
         ICar.DataTypes.ThrottlePosition     :   (0         , 50      , SimVarDir.Both, 0  , 100 ),
@@ -25,23 +30,25 @@ class CarSim(ICar):
         ICar.DataTypes.FuelRate             :   (0         , 2       , SimVarDir.Both, 0  , 20  ),
     }
 
+    connected = True
+
     __simValues = {}
 
     def __init__(self):
         print("Initialized Car!")
         random.seed()
 
-    def Connect(self):
-        print("Connected!")
+    def Reconnect(self):
+        pass
 
-    def EnableFetch(dataTypeList):
+    def enableFetch(self, dataTypeList):
         self.__enabled = dataTypeList
         pass
 
-    def GetSupportedDataTypes(self):
+    def getSupportedDataTypes(self):
         return self.__simParams.keys()
 
-    def FetchData(self, dataTypeList=None):
+    def fetchData(self, dataTypeList=None):
         dataToCheck=self.__enabled
         if dataTypeList is not None:
             dataToCheck = dataTypeList
@@ -52,20 +59,20 @@ class CarSim(ICar):
         # Return: Map with data defined by 
         # enable fetch or given data type list
 
-    def DumpAllData(self):
+    def dumpAllData(self):
         # Return: Map of all available data from the car
-        return self.FetchData()
+        return self.fetchData()
         pass
 
-    def DumpFreezeData(self):
+    def dumpFreezeData(self):
         # Return: Map of all available freeze data (data logged on error)
-        return self.FetchData()
+        return self.fetchData()
 
-    def CheckForCarErrors(self):
+    def checkForCarErrors(self):
         return {}
 
-    def GetErrorMessage(self):
-        return __errorMessage
+    def getErrorMessage(self):
+        return self.__errorMessage
 
     def __get(self, dataType):
         if dataType not in self.__simParams:
@@ -93,16 +100,16 @@ class CarSim(ICar):
         self.__simValues[dataType] = simValue
         return simValue
 
-    
+    def close(self):
+        pass
 
 if __name__ == '__main__':
-    car = CarSim()
-    car.Connect()
-    supportedDataTypes = car.GetSupportedDataTypes()
-
+    car = Car()
+    supportedDataTypes = car.getSupportedDataTypes()
+    car.enableFetch(supportedDataTypes)
     print('Supported data types is', supportedDataTypes)
     while True:
         time.sleep(1)
-        data = car.FetchData(supportedDataTypes)
+        data = car.fetchData()
         for key, value in data.items():
             print(int(key), value)

@@ -6,27 +6,47 @@ __author__ = 'Max'
 # location through the global variable 'gpsd'. For example: gpsd.fix.latitude
 
 from gps import *
-import os
+import os, time
 import threading
 
-
-gpsd = None  # seting the global variable
-
+dataStabilizationDelay = 2
 
 class GpsPoller(threading.Thread):
+
+    __mutex = threading.Lock()
+    __gpsd = None  # seting the global variable
+
     def __init__(self):
         threading.Thread.__init__(self)
-        global gpsd  # bring it in scope
-        gpsd = gps(mode=WATCH_ENABLE)  # starting the stream of info
+        self.daemon = True
+        self.__gpsd = gps(mode=WATCH_ENABLE)  # starting the stream of info
         self.current_value = None
         self.running = True  # setting the thread running to true
+        self.start()
+        time.sleep(dataStabilizationDelay)
 
     def run(self):
-        global gpsd
         while gpsp.running:
-            gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer
+            time.sleep(1)
+            with self.__mutex:
+                self.__gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer
 
+    def getPosition(self):
+        with self.__mutex:
+            return self.__gpsd.fix.latitude, self.__gpsd.fix.longitude
 
+    def getTime(self):
+        with self.__mutex:
+            return str(self.__gpsd.utc)
+
+    def gotSatLink(self):
+        with self.__mutex:
+            return str(self.__gpsd.fix.mode) != "1"
+
+    def disconnect(self):
+        with self.__mutex:
+            self.__gpsd.running = False
+            self.__gpsd.join()  # wait for the thread to finish what it's doing
 # Example on how to use a GpsPoller object:
 #
 # if __name__ == '__main__':

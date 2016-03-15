@@ -1,4 +1,3 @@
-
 import requests
 import json
 
@@ -32,6 +31,7 @@ class DbWrapper:
                 response = self.send(data)
                 buffer.write(data + response + "\n")
         buffer.close()
+
 """
 test = DbWrapper('10.20.111.213', '8001', 'Admin', '1234')
 test.send({'adsas': 1233})
