@@ -4,10 +4,10 @@ __author__ = 'Max'
 # GPSPpller is a (thread) object that constantly updates a global variable
 # (in this case gpsd) with the current GPS data. The core software can now access the current
 # location through the global variable 'gpsd'. For example: gpsd.fix.latitude
-
-from gps import *
-import os, time
+import os, time, sys
 import threading
+sys.path.append('gps-python3')
+from gps import *
 
 dataStabilizationDelay = 2
 
@@ -19,14 +19,14 @@ class GpsPoller(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.daemon = True
-        self.__gpsd = gps(mode=WATCH_ENABLE)  # starting the stream of info
+        self.__gpsd = GPS(mode=WATCH_ENABLE)  # starting the stream of info
         self.current_value = None
         self.running = True  # setting the thread running to true
         self.start()
         time.sleep(dataStabilizationDelay)
 
     def run(self):
-        while gpsp.running:
+        while self.running:
             time.sleep(1)
             with self.__mutex:
                 self.__gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer

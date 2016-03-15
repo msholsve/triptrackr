@@ -1,0 +1,3 @@
+[submodule "gpswrapper/gps-python3"]
+	path = gpswrapper/gps-python3
+	url = https://github.com/msholsve/gps-python3
