@@ -6,7 +6,7 @@ __author__ = 'Max'
 # location through the global variable 'gpsd'. For example: gpsd.fix.latitude
 import os, time, sys
 import threading
-sys.path.append('gps-python3')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/gps-python3')
 from gps import *
 
 dataStabilizationDelay = 2
@@ -45,8 +45,10 @@ class GpsPoller(threading.Thread):
 
     def disconnect(self):
         with self.__mutex:
-            self.__gpsd.running = False
-            self.__gpsd.join()  # wait for the thread to finish what it's doing
+            self.running = False
+        self.join()  # wait for the thread to finish what it's doing
+
+
 # Example on how to use a GpsPoller object:
 #
 # if __name__ == '__main__':

@@ -3,16 +3,16 @@ import json
 
 
 class DbWrapper:
-    def __init__(self, ip, port, username, password, tripid):
-        self.ip = ip
-        self.port = port
+    def __init__(self, api, username, password, tripid):
+        self.api = api
         self.username = username
         self.password = password
         self.tripid = tripid
 
     def send(self, data):
-        url = 'http://' + self.ip + ':' + self.port + "/api/post_data"
-        return requests.post(url, data=data, auth=(self.username, self.password))
+        url = 'http://' + self.api + "/api/post_data"
+        req = requests.post(url, data=data, auth=(self.username, self.password))
+        return req.status_code
 
     def dataBuffer(self, data, response):
         buffer = open("tripdata" + self.tripid+".txt", 'a')

@@ -1,4 +1,6 @@
-import obd, time, subprocess, re
+import obd, time, subprocess, re, sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/..')
+from config.config import Config
 
 try:
     from .icar import ICar
@@ -12,26 +14,33 @@ class Car(ICar):
     __errorMessage = ''
     connected = False
 
-    def __init__(self, debug = False):
-        self.__debug = debug
+    def __init__(self, configFile, debug=False):
+        self.config = Config(configFile)
+        self.debug = debug
+        self.enabledPids = self.config.tryGetWithDefault('enabledPids', [])
+        self.pidToVariableName = self.config.tryGetWithDefault('pidToVariableName', {})
+        self.__DBG(self.enabledPids, self.pidToVariableName)
         obd.debug.console = debug
         self.Reconnect()
         if self.connected:
             return
         scan = self.__scanBluetooth()
-        if self.__debug:
-            print(scan)
+        self.__DBG(scan)
         if 'OBDII' in scan:
             res = subprocess.check_output(['sudo' ,'rfcomm', 'bind', 'hci0', scan['OBDII']])
-            if self.__debug:
-                print(res)
+            self.__DBG(res)
             self.Reconnect()
         else:
             self.__errorMessage = 'Unable to find OBDII bluetooth adapter.'
 
+    def __DBG(self, *args):
+        if self.debug:
+            msg = " ".join([str(a) for a in args])
+            print(msg)
 
     def __scanBluetooth(self):
         scan = subprocess.check_output(['sudo' ,'hcitool', 'scan'])
+        self.__DBG(scan)
         matches = re.findall(r'\\t((?:[A-Fa-f0-9]+:){5}[A-Fa-f0-9]+)\\t([A-å-+0-9]*)\\n', str(scan), re.MULTILINE)
         return dict([(match[1], match[0]) for match in matches])
 
@@ -57,9 +66,9 @@ class Car(ICar):
             raise Exception("OBD is not connected")
         
         supportedDataTypes = []
-        for name, member in ICar.DataTypes.__members__.items():
-            if obd.commands[1][int(member)].supported:
-                supportedDataTypes.append(member)
+        for pid in self.enabledPids:
+            if obd.commands[1][pid].supported:
+                supportedDataTypes.append(pid)
 
         return supportedDataTypes
 
@@ -113,7 +122,7 @@ class Car(ICar):
 
 
 if __name__ == '__main__':
-    car = Car(True)
+    car = Car('obd.config')
     supportedDataTypes = car.getSupportedDataTypes()
 
     print('Supported data types is', supportedDataTypes)

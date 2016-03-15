@@ -1,96 +1,114 @@
 from gpswrapper import gpspoller
 from dbwrapper import dbwrapper
+from config.config import Config
 #from car import carsim as car
 from car import car
-import datetime, time, json
+import datetime, time, json, argparse
+import traceback, os
 
-# CONFIG
-pollingDelay = 1.5
-errorPollingDelay = 20
-debug = False
-carDataNames={
-    car.Car.DataTypes.FuelStatus:           'fuel_status',
-    car.Car.DataTypes.FuelLevel:            'fuel_level',
-    car.Car.DataTypes.FuelRate:             'fuel_rate',
-    car.Car.DataTypes.EngineLoad:           'engine_load',
-    car.Car.DataTypes.EngineCoolantTemp:    'coolant_temp',
-    car.Car.DataTypes.IntakePreassure:      'intake_pressure',
-    car.Car.DataTypes.FuelRailPressure:     'fuel_pressure',
-    car.Car.DataTypes.RPM:                  'rpm',
-    car.Car.DataTypes.Speed:                'speed',
-    car.Car.DataTypes.ThrottlePosition:     'throttle_position',
-    car.Car.DataTypes.RunTime:              'run_time',
-    car.Car.DataTypes.IntakeAirTemp:        'intake_air_temp',
-    car.Car.DataTypes.OutsideAirTemp:       'outside_air_temp',
-    car.Car.DataTypes.OilTemp:              'oil_temp',
-}
-# ENDCONFIG
+class Core:
 
+    def __init__(self, configFile=None, debug=False):
+        self.configFile = 'core.config' if configFile is None else configFile
+        self.debug = debug
+        self.config = Config(self.configFile)
+        self.tripId = '{0}:{1}'.format(self.config.reg,datetime.datetime.now())
+        self.dbWrapper = dbwrapper.DbWrapper(self.config.api, self.config.user, self.config.password, self.tripId)
+        self.error = []
+        self.errorPollingInterval = self.config.tryGetWithDefault('errorPollingInterval', 15)
+        self.pollingInterval = self.config.tryGetWithDefault('pollingInterval', 2)
 
-if __name__ == '__main__':
-    gpsd = gpspoller.GpsPoller()
-    obd = car.Car()
-    obdFetchEnabled = False
-    if not obd.connected:
-        print('OBD not connected on startup.')
+        startTripMessage = {
+            'type': 'trip',
+            'trip_id': self.tripId,
+            'user_id': self.config.user,
+            'car_id': self.config.reg,
+        }
+        self.__DBG(self.dbWrapper.send(startTripMessage))
 
-    dbWrapper = dbwrapper.DbWrapper('10.20.80.193', '8080', 'Admin', '1234')
+    def __enter__(self):
+        self.gpsd = gpspoller.GpsPoller()
+        self.obd = car.Car(self.config.tryGetWithDefault('obdConfigFile', 'obd.config'), self.debug)
+        self.obdFetchEnabled = False
+        if not self.obd.connected:
+            self.__DBG('OBD not connected on startup.')
 
-    reg = "RJ46564"  # TODO: Hent registrering
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
-    timeStamp = str(datetime.datetime.now())
-
-    trip = {
-        'tripid': '{0}:{1}'.format(reg,timeStamp),
-        'timestamp': timeStamp,
-        'car_name': reg,
-        'data': {}
-    }
-    error = []
-    timeSinceErrorDetect = errorPollingDelay+1
-    try:
+    def run(self):
+        start = time.time()
         while True:
-            if not obdFetchEnabled and obd.connected:
-                obd.enableFetch(obd.getSupportedDataTypes())
-                obdFetchEnabled = True
+            pollingStart = time.time()
+            if not self.obdFetchEnabled and self.obd.connected:
+                self.obd.enableFetch(self.obd.getSupportedDataTypes())
+                self.obdFetchEnabled = True
 
-            if timeSinceErrorDetect > errorPollingDelay:
-                if obd.connected:
-                    error = obd.checkForCarErrors()
-                timeSinceErrorDetect = 0
-            else:
-                timeSinceErrorDetect += pollingDelay
+            remain = start + self.errorPollingInterval - time.time()
+            if remain <= 0.0:
+                if self.obd.connected:
+                    self.error = self.obd.checkForCarErrors()
+                start = time.time()
 
             carDataList = {}
-            if obd.connected:
-                carDataList = obd.fetchData()
+            if self.obd.connected:
+                carDataList = self.obd.fetchData()
 
-            satelliteFix = gpsd.gotSatLink()
-            position = gpsd.getPosition()
-            data = {
-                'time': str(gpsd.getTime()),
-                'latitude': str(position[0] * satelliteFix),
-                'longitude': str(position[1] * satelliteFix),
-                'error': error
+            position = self.gpsd.getPosition()
+            dataPoint = {
+                'type': 'data',
+                'trip_id': self.tripId,
+                'registration_time': str(datetime.datetime.now()),
+                'latitude': position[0],
+                'longitude': position[1],
+                'errors': self.error,       
             }
 
             for dataType, value in carDataList.items():
-                data[carDataNames[dataType]] = value[0]
+                dataPoint[self.obd.pidToVariableName[dataType]] = value[0]
 
-            trip['timestamp'] = str(datetime.datetime.now())
-            trip['data'] = data
+            self.__DBG(json.dumps(dataPoint, sort_keys=True, indent=4))
+            self.__DBG(self.dbWrapper.send(dataPoint))
+            self.__DBG("Data sent!")
 
-            if debug:
-                print(json.dumps(trip, sort_keys=True, indent=4))
-            dbWrapper.send(trip)
-            if debug:
-                print("Data sent!")
+            if not self.obd.connected:
+                self.obd.Reconnect()
+            timeToSleep = pollingStart + self.pollingInterval - time.time()
+            if timeToSleep > 0.0:
+                time.sleep(timeToSleep)
 
-            if not obd.connected:
-                obd.Reconnect()
-            time.sleep(pollingDelay)
+    def close(self):
+        self.obd.close()
+        self.gpsd.disconnect()
 
-    except (KeyboardInterrupt, SystemExit):
-        print("\nKilling Thread...")
-        obd.close()
-        gpsd.disconnect()
+    def __DBG(self, *args):
+        if self.debug:
+            msg = " ".join([str(a) for a in args])
+            print(msg)
+
+def logException(ex, tb):
+    with open('exceptions.log', 'a+') as f:
+                f.write('=====================EXCEPTION======================\n')
+                f.write(str(datetime.datetime.now())+'\n'+str(ex)+'\n\n')
+                f.write(tb)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', help='Path to config file', type=str, metavar='<path>')
+    parser.add_argument('-d', help='Enable debug output', action='store_true')
+    args = parser.parse_args()
+    core = None
+    try:
+        core = Core(args.c, args.d)
+    except Exception as e:
+        logException(e, traceback.format_exc())
+        raise
+
+    while True:
+        try:
+            with core:
+                core.run()
+        except Exception as e:
+            if isinstance(e, KeyboardInterrupt):
+                os.__exit__(0)
+            logException(e, traceback.format_exc())

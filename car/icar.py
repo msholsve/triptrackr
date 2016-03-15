@@ -59,19 +59,3 @@ class ICar(metaclass=ABCMeta):
     def getErrorMessage(self):
         # Return: string with latest error message
         pass
-
-    class DataTypes(IntEnum):
-        FuelStatus          = 0x03
-        FuelLevel           = 0x2F
-        EngineCoolantTemp   = 0x05
-        EngineLoad          = 0x04
-        RPM                 = 0x0C
-        Speed               = 0x0D
-        IntakeAirTemp       = 0x0F
-        IntakePreassure     = 0x0B
-        FuelRailPressure    = 0x23
-        ThrottlePosition    = 0x11
-        RunTime             = 0x1F
-        OutsideAirTemp      = 0x46
-        OilTemp             = 0x5C
-        FuelRate            = 0x5E
