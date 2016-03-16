@@ -50,7 +50,7 @@ class Car(ICar):
                 self.__obd.close()
             self.__obd = obd.OBD()
             self.connected = self.__obd.is_connected()
-        except e:
+        except Exception as e:
             self.__errorMessage = 'Exception when connecting to OBD: {0}'.format(e)
         return self.connected
 

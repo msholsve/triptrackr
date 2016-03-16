@@ -11,20 +11,11 @@ class Core:
     def __init__(self, configFile=None, debug=False):
         self.configFile = 'core.config' if configFile is None else configFile
         self.debug = debug
+        self.tripId = None
         self.config = Config(self.configFile)
-        self.tripId = '{0}:{1}'.format(self.config.reg,datetime.datetime.now())
-        self.dbWrapper = dbwrapper.DbWrapper(self.config.api, self.config.user, self.config.password, self.tripId)
         self.error = []
         self.errorPollingInterval = self.config.tryGetWithDefault('errorPollingInterval', 15)
         self.pollingInterval = self.config.tryGetWithDefault('pollingInterval', 2)
-
-        startTripMessage = {
-            'type': 'trip',
-            'trip_id': self.tripId,
-            'user_id': self.config.user,
-            'car_id': self.config.reg,
-        }
-        self.__DBG(self.dbWrapper.send(startTripMessage))
 
     def __enter__(self):
         self.gpsd = gpspoller.GpsPoller()
@@ -33,8 +24,23 @@ class Core:
         if not self.obd.connected:
             self.__DBG('OBD not connected on startup.')
 
+        if self.tripId is None:
+            self.__startTrip()
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+    def __startTrip():
+        self.tripId = '{0}:{1}'.format(self.config.reg,datetime.datetime.now())
+        self.dbWrapper = dbwrapper.DbWrapper(self.config.api, self.config.user, self.config.password, self.tripId)
+
+        startTripMessage = {
+            'type': 'trip',
+            'trip_id': self.tripId,
+            'user_id': self.config.user,
+            'car_id': self.config.reg,
+        }
+        self.dbWrapper.send(startTripMessage)
 
     def run(self):
         start = time.time()
@@ -67,8 +73,8 @@ class Core:
             for dataType, value in carDataList.items():
                 dataPoint[self.obd.pidToVariableName[str(dataType)]] = value[0]
 
-            self.__DBG(json.dumps(dataPoint, sort_keys=True, indent=4))
-            self.__DBG(self.dbWrapper.send(dataPoint))
+            self.__DBG(json.dumps(dataPoint, sort_keys=True))
+            self.dbWrapper.send(dataPoint)
             self.__DBG("Data sent!")
 
             if not self.obd.connected:
