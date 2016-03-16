@@ -65,7 +65,7 @@ class Core:
             }
 
             for dataType, value in carDataList.items():
-                dataPoint[self.obd.pidToVariableName[dataType]] = value[0]
+                dataPoint[self.obd.pidToVariableName[str(dataType)]] = value[0]
 
             self.__DBG(json.dumps(dataPoint, sort_keys=True, indent=4))
             self.__DBG(self.dbWrapper.send(dataPoint))
@@ -74,6 +74,7 @@ class Core:
             if not self.obd.connected:
                 self.obd.Reconnect()
             timeToSleep = pollingStart + self.pollingInterval - time.time()
+            __DBG('Time to sleep', timeToSleep)
             if timeToSleep > 0.0:
                 time.sleep(timeToSleep)
 

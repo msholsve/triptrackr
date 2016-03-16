@@ -119,6 +119,7 @@ class Car(ICar):
 
     def close(self):
         self.__obd.close()
+        self.connected = False
 
 
 if __name__ == '__main__':
