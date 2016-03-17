@@ -1,36 +1,72 @@
 import requests
 import json
-
+import threading
 
 class DbWrapper:
+
+    debug = False
+    __bufferMutex = threading.Lock()
+    __countMutex = threading.Lock()
+    __inBuffer = 0
+
     def __init__(self, api, username, password, tripid):
         self.api = api
+        self.url = 'http://' + self.api + '/api/post_data'
         self.username = username
         self.password = password
         self.tripid = tripid
+        self.retries = 5
 
     def send(self, data):
-        url = 'http://' + self.api + "/api/post_data"
-        req = requests.post(url, data=data, auth=(self.username, self.password))
-        return req.status_code
+        self.saveLocal(data)
+        sendThread = threading.Thread(target=self.__send, daemon=True, args=[data])
+        sendThread.start()
 
-    def dataBuffer(self, data, response):
-        buffer = open("tripdata" + self.tripid+".txt", 'a')
-        jsondata = json.dumps(data)
-        buffer.write(jsondata + response + "\n")
-        buffer.close()
+    def __send(self, data):
+        tries = 0
+        while tries < self.retries:
+            try:
+                req = requests.post(self.url, json=data, auth=(self.username, self.password))
+                if req.status_code == 200:
+                    self.reSend()
+                    return
+            except:
+                pass
+            tries += 1
+
+        self.dataBuffer(data)
+
+    def saveLocal(self, data):
+        jsondata = json.dumps(data, sort_keys=True)
+        with open("trip_" + self.tripid+".txt", 'a') as f:
+            f.write(jsondata + '\n')
+
+    def dataBuffer(self, data):
+        with self.__bufferMutex:
+            self.__inBuffer += 1
+            jsondata = json.dumps(data, sort_keys=True)
+            with open("buffer" + self.tripid+".txt", 'a') as f:
+                f.write(jsondata + '\n')
 
     def reSend(self):
-        buffer = open("tripdata" + self.tripid +".txt", 'r')
-        lines = buffer.readlines()
-        buffer.close()
-        buffer = open("tripdata" + self.tripid + ".txt", 'w')
+        lines = None
+        with self.__bufferMutex:
+            if self.__inBuffer == 0:
+                return
+
+            with open("buffer" + self.tripid +".txt", 'r+') as f:
+                lines = f.readlines()
+                f.truncate(0)
+
+            self.__inBuffer = 0
+
         for line in lines:
-            if line[-3:] is not "200":
-                data = line[:-4]
-                response = self.send(data)
-                buffer.write(data + response + "\n")
-        buffer.close()
+            self.send(json.load(data))
+
+    def __DBG(self, *args):
+        if self.debug:
+            msg = " ".join([str(a) for a in args])
+            print(msg)
 
 """
 test = DbWrapper('10.20.111.213', '8001', 'Admin', '1234')
