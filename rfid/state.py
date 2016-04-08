@@ -1,6 +1,7 @@
 import threading
-import time
-from rfid.pyusb_keyboard_alike.keyboard_alike import reader
+import os, time, sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/pyusb_keyboard_alike')
+from keyboard_alike import reader
 
 
 class Identity(threading.Thread):

@@ -83,6 +83,7 @@ class Core:
                     'trip_id': self.tripId,
                 }
                 self.dbWrapper.send(credentials)
+                self.__DBG('RFID Card: ' + driver_id)
 
             self.__DBG(json.dumps(dataPoint, sort_keys=True))
             self.dbWrapper.send(dataPoint)
