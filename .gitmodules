@@ -1,3 +1,6 @@
 [submodule "gpswrapper/gps-python3"]
 	path = gpswrapper/gps-python3
 	url = https://github.com/msholsve/gps-python3
+[submodule "rfid/pyusb_keyboard_alike"]
+	path = rfid/pyusb_keyboard_alike
+	url = https://github.com/msholsve/pyusb-keyboard-alike.git

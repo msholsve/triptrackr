@@ -1,6 +1,6 @@
 import threading
 import time
-from rfid.keyboard_alike import reader
+from rfid.pyusb_keyboard_alike.keyboard_alike import reader
 
 
 class Identity(threading.Thread):
@@ -11,7 +11,7 @@ class Identity(threading.Thread):
         self.daemon = True
         self.current_value = None
         self.running = True  # setting the thread running to true
-        self.connected = True
+        self.connected = False
         self.reader = None
 
         self.id = None
