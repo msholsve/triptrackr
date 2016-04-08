@@ -30,7 +30,7 @@ class Core:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-    def __startTrip():
+    def __startTrip(self):
         self.tripId = '{0}:{1}'.format(self.config.reg,datetime.datetime.now())
         self.dbWrapper = dbwrapper.DbWrapper(self.config.api, self.config.user, self.config.password, self.tripId)
 
@@ -80,7 +80,7 @@ class Core:
             if not self.obd.connected:
                 self.obd.Reconnect()
             timeToSleep = pollingStart + self.pollingInterval - time.time()
-            __DBG('Time to sleep', timeToSleep)
+            self.__DBG('Time to sleep', timeToSleep)
             if timeToSleep > 0.0:
                 time.sleep(timeToSleep)
 
@@ -117,5 +117,5 @@ if __name__ == '__main__':
                 core.run()
         except Exception as e:
             if isinstance(e, KeyboardInterrupt):
-                os.__exit__(0)
+                os._exit(0)
             logException(e, traceback.format_exc())
