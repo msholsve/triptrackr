@@ -3,6 +3,7 @@ from dbwrapper import dbwrapper
 from config.config import Config
 #from car import carsim as car
 from car import car
+from rfid import state
 import datetime, time, json, argparse
 import traceback, os
 
@@ -33,6 +34,7 @@ class Core:
     def __startTrip(self):
         self.tripId = '{0}:{1}'.format(self.config.reg,datetime.datetime.now())
         self.dbWrapper = dbwrapper.DbWrapper(self.config.api, self.config.user, self.config.password, self.tripId)
+        self.identity = state.Identity()
 
         startTripMessage = {
             'type': 'trip',
@@ -72,6 +74,15 @@ class Core:
 
             for dataType, value in carDataList.items():
                 dataPoint[self.obd.pidToVariableName[str(dataType)]] = value[0]
+
+            driver_id = self.identity.get_id()
+            if driver_id:
+                credentials = {
+                    'type': 'user',
+                    'user_id': driver_id,
+                    'trip_id': self.tripId,
+                }
+                self.dbWrapper.send(credentials)
 
             self.__DBG(json.dumps(dataPoint, sort_keys=True))
             self.dbWrapper.send(dataPoint)
