@@ -8,6 +8,7 @@ class DbWrapper:
     __bufferMutex = threading.Lock()
     __countMutex = threading.Lock()
     __inBuffer = 0
+    __pendingPriorityMessage = None
 
     def __init__(self, api, username, password, tripid):
         self.api = api
@@ -17,10 +18,36 @@ class DbWrapper:
         self.tripid = tripid
         self.retries = 5
 
+    def sendPriorityMessage(self, data):
+        self.saveLocal(data)
+        if not self.__send(data):
+            self.__pendingPriorityMessage = data
+        else:
+            self.__pendingPriorityMessage = None
+
     def send(self, data):
         self.saveLocal(data)
-        sendThread = threading.Thread(target=self.__send, daemon=True, args=[data])
+        if not self.__resendPriorityMessage():
+            self.dataBuffer(data)
+            self.__DBG("Buffering, waiting on priority message")
+            return            
+        sendThread = threading.Thread(target=self.__sendOrBuffer, daemon=True, args=[data])
         sendThread.start()
+
+    def __resendPriorityMessage(self):
+        self.__DBG("Pri:",self.__pendingPriorityMessage)
+        if self.__pendingPriorityMessage is None:
+            return True
+        if self.__send(self.__pendingPriorityMessage):
+            self.__pendingPriorityMessage = None
+            return True
+        return False
+
+    def __sendOrBuffer(self, data):
+        if not self.__send(data):
+            self.dataBuffer(data)
+        else:
+            self.reSendBuffer()
 
     def __send(self, data):
         tries = 0
@@ -28,13 +55,14 @@ class DbWrapper:
             try:
                 req = requests.post(self.url, json=data, auth=(self.username, self.password))
                 if req.status_code == 200:
-                    self.reSend()
-                    return
+                    return True
+                else:
+                    self.__DBG(req.status_code, req.text)
             except:
                 pass
             tries += 1
 
-        self.dataBuffer(data)
+        return False
 
     def saveLocal(self, data):
         jsondata = json.dumps(data, sort_keys=True)
@@ -48,7 +76,7 @@ class DbWrapper:
             with open("buffer" + self.tripid+".txt", 'a') as f:
                 f.write(jsondata + '\n')
 
-    def reSend(self):
+    def reSendBuffer(self):
         lines = None
         with self.__bufferMutex:
             if self.__inBuffer == 0:

@@ -13,6 +13,7 @@ class Core:
         self.configFile = 'core.config' if configFile is None else configFile
         self.debug = debug
         self.tripId = None
+        self.start_time = None
         self.config = Config(self.configFile)
         self.error = []
         self.errorPollingInterval = self.config.tryGetWithDefault('errorPollingInterval', 15)
@@ -32,17 +33,20 @@ class Core:
         self.close()
 
     def __startTrip(self):
-        self.tripId = '{0}:{1}'.format(self.config.reg,datetime.datetime.now())
+        self.start_time = str(datetime.datetime.now())
+        self.tripId = '{0}:{1}'.format(self.config.reg,self.start_time)
         self.dbWrapper = dbwrapper.DbWrapper(self.config.api, self.config.user, self.config.password, self.tripId)
+        self.dbWrapper.debug = self.debug
         self.identity = state.Identity()
 
         startTripMessage = {
             'type': 'trip',
-            'trip_id': self.tripId,
-            'user_id': self.config.user,
+            'id': self.tripId,
             'car_id': self.config.reg,
+            'start_time': self.start_time
         }
-        self.dbWrapper.send(startTripMessage)
+        self.__DBG(json.dumps(startTripMessage, sort_keys=True))
+        self.dbWrapper.sendPriorityMessage(startTripMessage)
 
     def run(self):
         start = time.time()
