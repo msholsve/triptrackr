@@ -26,10 +26,12 @@ class GpsPoller(threading.Thread):
         time.sleep(dataStabilizationDelay)
 
     def run(self):
+        status = 0
         while self.running:
-            time.sleep(1)
             with self.__mutex:
-                self.__gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer
+                status = self.__gpsd.read() 
+            if status != 0:
+                time.sleep(0.1)
 
     def getPosition(self):
         with self.__mutex:
