@@ -53,8 +53,12 @@ class Core:
         while True:
             pollingStart = time.time()
             if not self.obdFetchEnabled and self.obd.connected:
-                self.obd.enableFetch(self.obd.getSupportedDataTypes())
-                self.obdFetchEnabled = True
+                dataTypes = self.obd.getSupportedDataTypes()
+                if len(dataTypes) == 0:
+                    self.obd.connected = False
+                else:
+                    self.obd.enableFetch(dataTypes)
+                    self.obdFetchEnabled = True
 
             remain = start + self.errorPollingInterval - time.time()
             if remain <= 0.0:
