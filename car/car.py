@@ -67,7 +67,7 @@ class Car(ICar):
         
         supportedDataTypes = []
         for pid in self.enabledPids:
-            if obd.commands[1][pid].supported:
+            if self.__obd.supports(obd.commands[1][pid]):
                 supportedDataTypes.append(pid)
 
         return supportedDataTypes
